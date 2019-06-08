@@ -68,27 +68,25 @@ void setup()               // run once, when the sketch starts
 
     delay(20);
   }
-
-  // Ready to go
-
-  lcd.clear();
-  lcd.print("Press B");
-  lcd.gotoXY(0, 1);
-  lcd.print("To Start");
   
-  wait_for_button_press(BUTTON_B);
-  wait_for_button_release(BUTTON_B);
-  ready_engines()
+  ready_engines();
 }
 
 void ready_engines() 
 {
+  lcd.clear();
+  lcd.print("Press B");
+  lcd.gotoXY(0, 1);
+  lcd.print("To Start");
+  wait_for_button_press(BUTTON_B);
+  wait_for_button_release(BUTTON_B);
+  
   buzzer.playNote(NOTE_E(5), 200, 15);
-  delay(800);
+  delay(300);
   buzzer.playNote(NOTE_E(5), 200, 15);
-  delay(800);
+  delay(300);
   buzzer.playNote(NOTE_E(5), 200, 15);
-  delay(800);
+  delay(300);
   buzzer.playNote(NOTE_E(6), 400, 15);
 
   motors.setSpeeds(leftSpeed, rightSpeed); 
@@ -96,18 +94,24 @@ void ready_engines()
 
 void loop()                // run over and over again
 {
+  delay(20);
   robot.readLine(sensors, IR_EMITTERS_ON);
+  
   if (sensors[2] < 300) 
   {
-    motors.setSpeeds(0,0);
     // victory
+    motors.setSpeeds(0,0);
+    buzzer.playNote(NOTE_B(5), 100, 15);
+    delay(100);
+    buzzer.playNote(NOTE_E(6), 400, 15);
+    delay(400);
+    ready_engines();
   }
-
-  delay(20);
 }
 
 void change_speeds()
 {
+  // run this in the loop
   lcd.clear();
   lcd.gotoXY(0, 0);
   lcd.print("L");
