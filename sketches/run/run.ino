@@ -1,8 +1,12 @@
+#include <Pololu3pi.h>  // gives access to sensor interface functions
+#include <PololuQTRSensors.h>  // used by Pololu3pi.h
+
 #include <OrangutanLEDs.h>
 #include <OrangutanAnalog.h>
 #include <OrangutanMotors.h>
 #include <OrangutanLCD.h>
 #include <OrangutanPushbuttons.h>
+#include <OrangutanBuzzer.h>
 
 /*
  * OrangutanMotorExample for the 3pi robot, Orangutan LV-168, Orangutan SV-xx8,
@@ -26,6 +30,10 @@ OrangutanMotors motors;
 
 OrangutanLCD lcd;
 OrangutanPushbuttons buttons;
+OrangutanBuzzer buzzer;
+
+Pololu3pi robot;
+unsigned int sensors[5]; // an array to hold sensor values
 
 int leftSpeed;
 int rightSpeed;
@@ -35,30 +43,71 @@ bool started;
 
 void setup()               // run once, when the sketch starts
 {
+  robot.init(2000);
+
   leftSpeed = 243;
   rightSpeed = 255;
 
   isLeft = true;
   started = false;
+
+  motors.setSpeeds(0, 0);
+
+  // Calibrate IR sensors
+  lcd.clear();
+  lcd.print("Press B");
+  lcd.gotoXY(0, 1);
+  lcd.print("To Calibrate");
+  wait_for_button_press(BUTTON_B);
+  wait_for_button_release(BUTTON_B);
+
+  for(int i=0; i<100; i++) {
+    lcd.clear();
+    lcd.print(i);
+    robot.calibrateLineSensors(IR_EMITTERS_ON);
+
+    delay(20);
+  }
+
+  // Ready to go
+
+  lcd.clear();
+  lcd.print("Press B");
+  lcd.gotoXY(0, 1);
+  lcd.print("To Start");
+  
+  wait_for_button_press(BUTTON_B);
+  wait_for_button_release(BUTTON_B);
+  ready_engines()
+}
+
+void ready_engines() 
+{
+  buzzer.playNote(NOTE_E(5), 200, 15);
+  delay(800);
+  buzzer.playNote(NOTE_E(5), 200, 15);
+  delay(800);
+  buzzer.playNote(NOTE_E(5), 200, 15);
+  delay(800);
+  buzzer.playNote(NOTE_E(6), 400, 15);
+
+  motors.setSpeeds(leftSpeed, rightSpeed); 
 }
 
 void loop()                // run over and over again
 {
-  if (!started) {
-    lcd.clear();
-    lcd.print("waiting");
-    motors.setSpeeds(0, 0);
-    wait_for_button_press(BUTTON_B);
-    wait_for_button_release(BUTTON_B);
-    started = true;
-    delay(1000);
+  robot.readLine(sensors, IR_EMITTERS_ON);
+  if (sensors[2] < 300) 
+  {
+    motors.setSpeeds(0,0);
+    // victory
   }
-  
-  motors.setSpeeds(leftSpeed, rightSpeed);
-  delay(10);
 
-  char tmp_str[3];
+  delay(20);
+}
 
+void change_speeds()
+{
   lcd.clear();
   lcd.gotoXY(0, 0);
   lcd.print("L");
